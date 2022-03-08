@@ -413,10 +413,16 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ImageSelfieSegmentationExample/Pods-ImageSelfieSegmentationExample-resources.sh",
+				"${PODS_CONFIGURATION_BUILD_DIR}/MLKitSegmentationCommon/MLKitSegmentationCommonResources.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/MLKitSegmentationSelfie/MLKitSegmentationSelfieResources.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/MLKitXenoCommon/MLKitXenoResources.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/AccessibilityResources.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/MLKitSegmentationCommonResources.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/MLKitSegmentationSelfieResources.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/MLKitXenoResources.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/AccessibilityResources.bundle",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
