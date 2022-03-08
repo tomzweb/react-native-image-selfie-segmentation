@@ -17,6 +17,9 @@ const ImageSelfieSegmentation = NativeModules.ImageSelfieSegmentation
       }
     );
 
-export function multiply(a: number, b: number): Promise<number> {
-  return ImageSelfieSegmentation.multiply(a, b);
+export function replaceBackground(
+  inputImage: string,
+  backgroundImage: string
+): Promise<string> {
+  return ImageSelfieSegmentation.replaceBackground(inputImage, backgroundImage);
 }

@@ -1,8 +1,10 @@
 @objc(ImageSelfieSegmentation)
 class ImageSelfieSegmentation: NSObject {
 
-    @objc(multiply:withB:withResolver:withRejecter:)
-    func multiply(a: Float, b: Float, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
-        resolve(a*b)
+    @objc(replaceBackground:withB:withResolver:withRejecter:)
+    func replaceBackground(inputImage: NSString, backgroundImage: NSString, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
+        print(inputImage)
+        print(backgroundImage)
+        resolve("Hello")
     }
 }
