@@ -50,7 +50,7 @@ export default function App() {
           style={styles.image}
           source={{ uri: image }}
           resizeMethod="auto"
-          resizeMode="cover"
+          resizeMode="contain"
         />
       )}
       <Button
