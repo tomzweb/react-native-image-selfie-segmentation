@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.util.Base64;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -58,6 +59,19 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
       Bitmap backgroundBitmap = toBitmap(backgroundStr);
       InputImage inputImage = InputImage.fromBitmap(inputBitmap, 0);
 
+      if (inputBitmap.getWidth() > backgroundBitmap.getWidth() || inputBitmap.getHeight() > backgroundBitmap.getHeight()) {
+        // "Input image \(inputWidth)x\(inputHeight) is smaller than background image \(backgroundWidth)x\(backgroundHeight)"
+        String iWidth = String.valueOf(inputBitmap.getWidth());
+        String iHeight = String.valueOf(inputBitmap.getHeight());
+        String bWidth = String.valueOf(backgroundBitmap.getWidth());
+        String bHeight = String.valueOf(backgroundBitmap.getHeight());
+        promise.reject("images", "Input image " + iWidth + "x" + iHeight
+          + " is smaller than background image " + bWidth + "x" + bHeight);
+
+        return;
+      }
+
+      Log.i("HERE", "AFTER REJECT");
       // process the mask
       Task<SegmentationMask> result = segmenter.process(inputImage);
 
@@ -65,15 +79,16 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
         SegmentationMask mask = Tasks.await(result);
         // convert mask
         base64Image = generateBase64MaskImage(mask, inputBitmap, backgroundBitmap);
+        promise.resolve(base64Image);
       } catch (ExecutionException e) {
         // The Task failed, this is the same exception you'd get in a non-blocking
         // failure handler.
+        promise.reject("mask", e.getLocalizedMessage());
       } catch (InterruptedException e) {
         // An interrupt occurred while waiting for the task to complete.
+        promise.reject("mask", e.getLocalizedMessage());
       }
 
-
-      promise.resolve(base64Image);
     }
 
   private String generateBase64MaskImage (SegmentationMask mask, Bitmap inputBitmap, Bitmap backgroundBitmap) {
