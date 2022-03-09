@@ -15,10 +15,10 @@ import { replaceBackground } from 'react-native-image-selfie-segmentation';
 const windowWidth = Dimensions.get('window').width;
 
 export default function App() {
-  const [image, setImage] = useState<string | undefined>();
-  const [inputImageUri, setInputImageUri] = useState<string | undefined>();
   const [loading, setLoading] = useState<boolean>(false);
-  const [backgroundImageUri, setBackgroundImageUri] = useState<
+  const [image, setImage] = useState<string | undefined>();
+  const [inputImage, setInputImage] = useState<string | undefined>();
+  const [backgroundImage, setBackgroundImage] = useState<
     string | undefined
   >();
 
@@ -41,9 +41,9 @@ export default function App() {
   };
 
   const onProcessImageHandler = async () => {
-    if (inputImageUri && backgroundImageUri) {
+    if (inputImage && backgroundImage) {
       setLoading(true);
-      await replaceBackground(inputImageUri, backgroundImageUri)
+      await replaceBackground(inputImage, backgroundImage)
         .then((response) => {
           setImage(response);
           setLoading(false);
@@ -59,11 +59,11 @@ export default function App() {
     <View style={styles.container}>
       <View style={styles.inputContainer}>
         <View style={styles.inputSection}>
-          {inputImageUri ? (
+          {inputImage ? (
             <Image
               style={styles.inputImage}
               resizeMode="cover"
-              source={{ uri: `data:image/jpeg;base64,${inputImageUri}` }}
+              source={{ uri: `data:image/jpeg;base64,${inputImage}` }}
             />
           ) : (
             <View style={styles.inputImage}>
@@ -72,18 +72,18 @@ export default function App() {
           )}
           <TouchableOpacity
             style={styles.inputBtn}
-            onPress={() => loadImageLibrary(setInputImageUri)}
+            onPress={() => loadImageLibrary(setInputImage)}
           >
             <Text style={styles.inputBtnText}>Add Selfie</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.inputSection}>
-          {backgroundImageUri ? (
+          {backgroundImage ? (
             <Image
               style={styles.inputImage}
               resizeMode="cover"
-              source={{ uri: `data:image/jpeg;base64,${backgroundImageUri}` }}
+              source={{ uri: `data:image/jpeg;base64,${backgroundImage}` }}
             />
           ) : (
             <View style={styles.inputImage}>
@@ -92,7 +92,7 @@ export default function App() {
           )}
           <TouchableOpacity
             style={styles.inputBtn}
-            onPress={() => loadImageLibrary(setBackgroundImageUri)}
+            onPress={() => loadImageLibrary(setBackgroundImage)}
           >
             <Text style={styles.inputBtnText}>Add Background</Text>
           </TouchableOpacity>
@@ -101,7 +101,7 @@ export default function App() {
 
       <TouchableOpacity
         style={
-          inputImageUri && backgroundImageUri
+          inputImage && backgroundImage
             ? styles.inputBtn
             : [styles.inputBtn, styles.inputBtnDisabled]
         }
