@@ -1,13 +1,23 @@
 import * as React from 'react';
 import { Dispatch, SetStateAction, useState } from 'react';
-import { launchImageLibrary } from 'react-native-image-picker';
+import {
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
 
-import { StyleSheet, View, Text, Image, Button } from 'react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { replaceBackground } from 'react-native-image-selfie-segmentation';
+
+const windowWidth = Dimensions.get('window').width;
 
 export default function App() {
   const [image, setImage] = useState<string | undefined>();
   const [inputImageUri, setInputImageUri] = useState<string | undefined>();
+  const [loading, setLoading] = useState<boolean>(false);
   const [backgroundImageUri, setBackgroundImageUri] = useState<
     string | undefined
   >();
@@ -15,7 +25,6 @@ export default function App() {
   const loadImageLibrary = async (
     setter: Dispatch<SetStateAction<string | undefined>>
   ) => {
-    console.log('LOADING IMAGE LIBRARY');
     return await launchImageLibrary(
       {
         mediaType: 'photo',
@@ -33,39 +42,91 @@ export default function App() {
 
   const onProcessImageHandler = async () => {
     if (inputImageUri && backgroundImageUri) {
-      console.log('BEGIN PROCESSING IMAGE');
-      await replaceBackground(inputImageUri, backgroundImageUri).then(
-        (response) => {
-          console.log('IMAGE PROCESSED');
+      setLoading(true);
+      await replaceBackground(inputImageUri, backgroundImageUri)
+        .then((response) => {
           setImage(response);
-        }
-      );
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.log('ERROR', error);
+          setLoading(false);
+        });
     }
   };
 
   return (
     <View style={styles.container}>
-      {image && (
-        <Image
-          style={styles.image}
-          source={{ uri: image }}
-          resizeMethod="auto"
-          resizeMode="contain"
-        />
-      )}
-      <Button
-        title={'Load Input Image'}
-        onPress={() => loadImageLibrary(setInputImageUri)}
-      />
-      <Text>Input: {inputImageUri ? 'Loaded' : 'Pending'}</Text>
-      <Button
-        title={'Load Background Image'}
-        onPress={() => loadImageLibrary(setBackgroundImageUri)}
-      />
-      <Text>Background: {backgroundImageUri ? 'Loaded' : 'Pending'}</Text>
-      {inputImageUri && backgroundImageUri && (
-        <Button title={'Process Image'} onPress={onProcessImageHandler} />
-      )}
+      <View style={styles.inputContainer}>
+        <View style={styles.inputSection}>
+          {inputImageUri ? (
+            <Image
+              style={styles.inputImage}
+              resizeMode="cover"
+              source={{ uri: `data:image/jpeg;base64,${inputImageUri}` }}
+            />
+          ) : (
+            <View style={styles.inputImage}>
+              <Text style={styles.inputImageText}>+</Text>
+            </View>
+          )}
+          <TouchableOpacity
+            style={styles.inputBtn}
+            onPress={() => loadImageLibrary(setInputImageUri)}
+          >
+            <Text style={styles.inputBtnText}>Add Selfie</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.inputSection}>
+          {backgroundImageUri ? (
+            <Image
+              style={styles.inputImage}
+              resizeMode="cover"
+              source={{ uri: `data:image/jpeg;base64,${backgroundImageUri}` }}
+            />
+          ) : (
+            <View style={styles.inputImage}>
+              <Text style={styles.inputImageText}>+</Text>
+            </View>
+          )}
+          <TouchableOpacity
+            style={styles.inputBtn}
+            onPress={() => loadImageLibrary(setBackgroundImageUri)}
+          >
+            <Text style={styles.inputBtnText}>Add Background</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={
+          inputImageUri && backgroundImageUri
+            ? styles.inputBtn
+            : [styles.inputBtn, styles.inputBtnDisabled]
+        }
+        onPress={onProcessImageHandler}
+      >
+        <Text style={styles.inputBtnText}>
+          {loading ? 'Processing' : 'Process Image'}
+        </Text>
+      </TouchableOpacity>
+
+      <View style={styles.imageContainer}>
+        {image ? (
+          <Image
+            style={styles.image}
+            source={{ uri: image }}
+            resizeMode="contain"
+          />
+        ) : (
+          <View style={styles.image}>
+            <Text style={styles.inputImageText}>
+              {loading ? 'Loading' : 'Press Process Image'}
+            </Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 }
@@ -73,12 +134,53 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
+    padding: 20,
+  },
+  inputContainer: {
+    flex: 1,
+    flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inputSection: {
+    paddingHorizontal: 10,
+  },
+  inputBtn: {
+    padding: 10,
+    backgroundColor: '#000000',
+    borderRadius: 15,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  inputBtnDisabled: {
+    backgroundColor: '#777777',
+  },
+  inputBtnText: {
+    color: '#FFFFFF',
+  },
+  inputImage: {
+    width: (windowWidth - 60) / 2,
+    height: (windowWidth - 60) / 2,
+    borderRadius: 25,
+    backgroundColor: '#EBEBEB',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inputImageText: {
+    color: '#000000',
+    fontSize: 16,
+  },
+  imageContainer: {
+    flex: 1,
+    marginTop: 20,
   },
   image: {
-    width: '100%',
-    height: 400,
+    width: windowWidth - 40,
+    height: windowWidth - 40,
+    backgroundColor: '#EBEBEB',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 50,
   },
   box: {
     width: 60,
