@@ -26,16 +26,16 @@ const response = await replaceBackground(inputImage, backgroundImage);
 
 ## Props
 
-| Prop         | Type          | Default | Definition                                                                                                               |
-|--------------|---------------|-------|--------------------------------------------------------------------------------------------------------------------------|
-| inputImage | Base64 string | `` | Required - The selfie image                                                                                              |
-| backgroundImage | Base64 string | `` | Required - The background image <br/><br/>**Notice**: the background must be the same size as the input image, or larger |
+| Prop             | Type          | Definition                                                                                                               |
+|------------------|---------------|--------------------------------------------------------------------------------------------------------------------------|
+| Input Image      | Base64 String | Required - The selfie image                                                                                              |
+| Background Image | Base64 String | Required - The background image <br/><br/>**Notice**: the background must be the same size as the input image, or larger |
 
 ## Response
 
-| Response     | Type   | Default | Definition                                                                                      |
-|--------------|--------|-------|-------------------------------------------------------------------------------------------------|
-| Base64 Image | String | ""  | A base 64 image, containing "data:image/jpeg;base64," and relevant base64 data of the new image |
+| Response | Type          | Definition                                                                              |
+|----------|---------------|-----------------------------------------------------------------------------------------|
+| Image    | Base64 String | Image that Contains "data:image/jpeg;base64," and relevant Base64 data of the new image |
 
 ## Example
 
