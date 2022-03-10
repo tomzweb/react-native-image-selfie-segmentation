@@ -4,6 +4,9 @@ import CoreMedia
 
 @objc(ImageSelfieSegmentation)
 class ImageSelfieSegmentation: NSObject {
+    @objc static func requiresMainQueueSetup() -> Bool {
+        return false
+    }
 
     @objc(replaceBackground:withB:withResolver:withRejecter:)
     func replaceBackground(inputImage: NSString, backgroundImage: NSString, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
