@@ -31,6 +31,7 @@ export default function App() {
         const { assets } = result;
         if (assets && assets.length > 0) {
           const { uri } = assets[0];
+          console.log('URI', uri);
           setter(uri);
         }
       }
