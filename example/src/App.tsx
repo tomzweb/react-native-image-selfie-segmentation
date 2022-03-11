@@ -18,9 +18,7 @@ export default function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [image, setImage] = useState<string | undefined>();
   const [inputImage, setInputImage] = useState<string | undefined>();
-  const [backgroundImage, setBackgroundImage] = useState<
-    string | undefined
-  >();
+  const [backgroundImage, setBackgroundImage] = useState<string | undefined>();
 
   const loadImageLibrary = async (
     setter: Dispatch<SetStateAction<string | undefined>>
@@ -28,13 +26,12 @@ export default function App() {
     return await launchImageLibrary(
       {
         mediaType: 'photo',
-        includeBase64: true,
       },
       (result) => {
         const { assets } = result;
         if (assets && assets.length > 0) {
-          const { base64 } = assets[0];
-          setter(base64);
+          const { uri } = assets[0];
+          setter(uri);
         }
       }
     );
@@ -45,6 +42,7 @@ export default function App() {
       setLoading(true);
       await replaceBackground(inputImage, backgroundImage)
         .then((response) => {
+          console.log('RESPONSE', response);
           setImage(response);
           setLoading(false);
         })
@@ -63,7 +61,7 @@ export default function App() {
             <Image
               style={styles.inputImage}
               resizeMode="cover"
-              source={{ uri: `data:image/jpeg;base64,${inputImage}` }}
+              source={{ uri: inputImage }}
             />
           ) : (
             <View style={styles.inputImage}>
@@ -83,7 +81,7 @@ export default function App() {
             <Image
               style={styles.inputImage}
               resizeMode="cover"
-              source={{ uri: `data:image/jpeg;base64,${backgroundImage}` }}
+              source={{ uri: backgroundImage }}
             />
           ) : (
             <View style={styles.inputImage}>

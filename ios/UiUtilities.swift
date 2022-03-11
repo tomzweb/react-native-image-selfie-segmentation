@@ -5,12 +5,33 @@ import UIKit
 public class UIUtilities {
 
   // MARK: - Public
-    
+
     
     public static func convertUiImageToBase64String (img: UIImage) -> String {
       return img.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
     }
-        
+    
+    public static func loadFileToUiImage(filePath: String) -> UIImage? {
+        do {
+            let url = URL(string: filePath)
+            let imageData = try Data(contentsOf: url!)
+            return UIImage(data: imageData)
+        } catch {
+            print("Error loading image : \(error)")
+        }
+        return nil
+    }
+    
+    public static func saveUiImageToFilePath(uiImage: UIImage) -> String? {
+        var cacheUrl: URL {
+            return FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        }
+        let newPhotoFileName = UUID().uuidString + ".jpeg"
+        let imagePath = cacheUrl.path + "/" + newPhotoFileName
+        let fileSuccess = FileManager.default.createFile(atPath: imagePath, contents: uiImage.jpegData(compressionQuality: 1), attributes: nil)
+        return fileSuccess ? imagePath : nil
+    }
+            
         
     public static func convertBase64ToUiImage (strBase64: String) -> UIImage {
         let dataDecoded : Data = Data(base64Encoded: strBase64, options: .ignoreUnknownCharacters)!
