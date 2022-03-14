@@ -53,9 +53,9 @@ public class UIUtilities {
       guard let cgImage = image.cgImage else { return nil }
       let width = cgImage.width
       let height = cgImage.height
-        print("WIDTH")
+        print("FINAL WIDTH")
         print(width)
-        print("HEIGHT")
+        print("FINAL HEIGHT")
         print(height)
 
       var buffer: CVPixelBuffer? = nil
@@ -246,8 +246,6 @@ extension UIColor {
         let r, g, b, a: CGFloat
 
         if hex.hasPrefix("#") {
-            print("HEX")
-            print(hex)
             let start = hex.index(hex.startIndex, offsetBy: 1)
             let hexColor = String(hex[start...])
             
@@ -279,7 +277,7 @@ extension UIImage {
 
         let size = self.size
         // calculate aspect ratio
-        let aspectRatio = size.width > size.height ? round((size.width/size.height) * 10) / 10 : round((size.height/size.width) * 10) / 10
+        let aspectRatio = size.width > size.height ? round((size.width/size.height) * 1000) / 1000 : round((size.height/size.width) * 1000) / 1000
         
         // set default widths/heights
         width = dimension
@@ -290,7 +288,13 @@ extension UIImage {
             width = height
             height = dimension
         }
-
+        
+        // if the background is landscape, resize for larger dimension
+        if size.width > size.height && isBackground {
+            width = dimension * aspectRatio
+            height = dimension
+        }
+        
         if #available(iOS 10.0, *) {
             let renderFormat = UIGraphicsImageRendererFormat.default()
             let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: renderFormat)
