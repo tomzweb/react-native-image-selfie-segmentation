@@ -21,21 +21,31 @@ import { replaceBackground } from 'react-native-image-selfie-segmentation';
 
 // ...
 
-const response = await replaceBackground(inputImage, backgroundImage);
+const response = await replaceBackground(inputImage, backgroundImage, 500);
 ```
 
 ## Props
 
-| Prop             | Type          | Definition                                                                                                               |
-|------------------|---------------|--------------------------------------------------------------------------------------------------------------------------|
-| Input Image      | Base64 String | Required - The selfie image                                                                                              |
-| Background Image | Base64 String | Required - The background image <br/><br/>**Notice**: the background must be the same size as the input image, or larger |
+| Prop             | Type   | Definition                                                                                      |
+|------------------|--------|-------------------------------------------------------------------------------------------------|
+| Input Image      | String | Required - File URI: The selfie image                                                           |
+| Background Image | String | Required - File URI: The background image               |
+| Max Size         | Number | Optional - Default: 500. This will resize the input and background images to the required value. |
+
+**Max Size Notes**
+
+* The background maybe resized to a larger value. For example, an input image that is 1000x800 with a max size value of 250 will be resized to 250x200, but
+because the background size is required to larger than the input, a portrait background image of 800x1000 will be resized to 250x312.
+
+* On iOS Retina devices, Max Size is doubled, so a value of 250 with an input of 1000x800 will result in a 500x400 image.
+You can account for this by passing a value half of what is required.
+
 
 ## Response
 
-| Response | Type          | Definition                                                                              |
-|----------|---------------|-----------------------------------------------------------------------------------------|
-| Image    | Base64 String | Image that Contains "data:image/jpeg;base64," and relevant Base64 data of the new image |
+| Response | Type          | Definition                  |
+|----------|---------------|-----------------------------|
+| Image    | String | A File URI of the new image |
 
 ## Example
 
@@ -49,7 +59,7 @@ const [backgroundImage, setBackgroundImage] = useState();
 
 const onProcessImageHandler = async () => {
   if (inputImage && backgroundImage) {
-    await replaceBackground(inputImage, backgroundImage)
+    await replaceBackground(inputImage, backgroundImage, 400)
       .then((response) => {
         setImage(response);
       })
