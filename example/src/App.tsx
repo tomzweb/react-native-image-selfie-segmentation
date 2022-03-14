@@ -61,7 +61,7 @@ export default function App() {
           {inputImage ? (
             <Image
               style={styles.inputImage}
-              resizeMode="cover"
+              resizeMode="contain"
               source={{ uri: inputImage }}
             />
           ) : (
@@ -81,7 +81,7 @@ export default function App() {
           {backgroundImage ? (
             <Image
               style={styles.inputImage}
-              resizeMode="cover"
+              resizeMode="contain"
               source={{ uri: backgroundImage }}
             />
           ) : (
@@ -175,11 +175,11 @@ const styles = StyleSheet.create({
   },
   image: {
     width: windowWidth - 40,
-    height: windowWidth - 40,
+    height: '100%',
     backgroundColor: '#EBEBEB',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 50,
+    borderRadius: 0,
   },
   box: {
     width: 60,
