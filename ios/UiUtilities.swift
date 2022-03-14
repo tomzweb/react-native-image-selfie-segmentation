@@ -2,6 +2,7 @@ import AVFoundation
 import CoreVideo
 import UIKit
 
+
 public class UIUtilities {
 
   // MARK: - Public
@@ -11,11 +12,14 @@ public class UIUtilities {
       return img.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
     }
     
-    public static func loadFileToUiImage(filePath: String) -> UIImage? {
+    public static func loadFileToUiImage(filePath: String, maxSize: NSNumber, isBackground: Bool) -> UIImage? {
         do {
             let url = URL(string: filePath)
             let imageData = try Data(contentsOf: url!)
-            return UIImage(data: imageData)
+            let image = UIImage(data: imageData)
+            let maximumWidth = CGFloat(maxSize.floatValue);
+            let resizedImage = image?.resizeImage(maximumWidth, isBackground: isBackground)
+            return resizedImage;
         } catch {
             print("Error loading image : \(error)")
         }
@@ -49,6 +53,10 @@ public class UIUtilities {
       guard let cgImage = image.cgImage else { return nil }
       let width = cgImage.width
       let height = cgImage.height
+        print("WIDTH")
+        print(width)
+        print("HEIGHT")
+        print(height)
 
       var buffer: CVPixelBuffer? = nil
       CVPixelBufferCreate(
@@ -262,3 +270,42 @@ extension UIColor {
         return nil
     }
 }
+
+extension UIImage {
+    func resizeImage(_ dimension: CGFloat, isBackground: Bool) -> UIImage {
+        var width: CGFloat
+        var height: CGFloat
+        var newImage: UIImage
+
+        let size = self.size
+        // calculate aspect ratio
+        let aspectRatio = size.width > size.height ? round((size.width/size.height) * 10) / 10 : round((size.height/size.width) * 10) / 10
+        
+        // set default widths/heights
+        width = dimension
+        height = isBackground ? dimension * aspectRatio : dimension / aspectRatio;
+        
+        // if the input is portrait, flip the width/height values
+        if size.height > size.width && !isBackground {
+            width = height
+            height = dimension
+        }
+
+        if #available(iOS 10.0, *) {
+            let renderFormat = UIGraphicsImageRendererFormat.default()
+            let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: renderFormat)
+            newImage = renderer.image {
+                (context) in
+                self.draw(in: CGRect(x: 0, y: 0, width: width, height: height))
+            }
+        } else {
+            UIGraphicsBeginImageContextWithOptions(CGSize(width: width, height: height), false, 0)
+                self.draw(in: CGRect(x: 0, y: 0, width: width, height: height))
+                newImage = UIGraphicsGetImageFromCurrentImageContext()!
+            UIGraphicsEndImageContext()
+        }
+
+        return newImage
+    }
+}
+

@@ -312,7 +312,7 @@ PODS:
   - React-jsinspector (0.63.4)
   - react-native-image-picker (4.7.3):
     - React-Core
-  - react-native-image-selfie-segmentation (0.1.0):
+  - react-native-image-selfie-segmentation (0.1.2):
     - GoogleMLKit/SegmentationSelfie
     - React-Core
   - React-RCTActionSheet (0.63.4):
@@ -565,7 +565,7 @@ SPEC CHECKSUMS:
   React-jsiexecutor: 93bd528844ad21dc07aab1c67cb10abae6df6949
   React-jsinspector: 58aef7155bc9a9683f5b60b35eccea8722a4f53a
   react-native-image-picker: 4e6008ad8c2321622affa2c85432a5ebd02d480c
-  react-native-image-selfie-segmentation: 77c6923f8dca58cb1827e6ad4d09e4a086416be2
+  react-native-image-selfie-segmentation: 084ec75380e38e00b2b3aaa36acf65e4d5c3835f
   React-RCTActionSheet: 89a0ca9f4a06c1f93c26067af074ccdce0f40336
   React-RCTAnimation: 1bde3ecc0c104c55df246eda516e0deb03c4e49b
   React-RCTBlob: a97d378b527740cc667e03ebfa183a75231ab0f0

@@ -41,7 +41,7 @@ export default function App() {
   const onProcessImageHandler = async () => {
     if (inputImage && backgroundImage) {
       setLoading(true);
-      await replaceBackground(inputImage, backgroundImage)
+      await replaceBackground(inputImage, backgroundImage, 250)
         .then((response) => {
           console.log('RESPONSE', response);
           setImage(response);

@@ -54,13 +54,12 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
   // Example method
   // See https://reactnative.dev/docs/native-modules-android
   @ReactMethod
-  public void replaceBackground(String inputStr, String backgroundStr, Promise promise) {
+  public void replaceBackground(String inputStr, String backgroundStr, int maxSize, Promise promise) {
 
     String finalImage = "";
     int inputRotation =  getRotationFromPath(inputStr);
     int backgroundRotation = getRotationFromPath(backgroundStr);
-    Bitmap inputBitmap = resize(toBitmap(inputStr), 1000, 1000, 0,false);
-    int maxSize = inputBitmap.getWidth() > inputBitmap.getHeight() ? inputBitmap.getWidth() : inputBitmap.getHeight();
+    Bitmap inputBitmap = resize(toBitmap(inputStr), maxSize, maxSize, 0,false);
     Bitmap backgroundBitmap = resize(toBitmap(backgroundStr), maxSize, maxSize, backgroundRotation, true);
 
     Log.i("PRE INPUT SIZES", "Input image " + inputBitmap.getWidth() + "x" + inputBitmap.getHeight()

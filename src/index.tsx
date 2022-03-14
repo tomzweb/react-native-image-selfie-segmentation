@@ -19,7 +19,12 @@ const ImageSelfieSegmentation = NativeModules.ImageSelfieSegmentation
 
 export function replaceBackground(
   inputImage: string,
-  backgroundImage: string
+  backgroundImage: string,
+  maxSize: number = 500
 ): Promise<string> {
-  return ImageSelfieSegmentation.replaceBackground(inputImage, backgroundImage);
+  return ImageSelfieSegmentation.replaceBackground(
+    inputImage,
+    backgroundImage,
+    maxSize
+  );
 }

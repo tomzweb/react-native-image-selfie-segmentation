@@ -8,8 +8,8 @@ class ImageSelfieSegmentation: NSObject {
         return false
     }
 
-    @objc(replaceBackground:withB:withResolver:withRejecter:)
-    func replaceBackground(inputImage: NSString, backgroundImage: NSString, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
+    @objc(replaceBackground:withB:withC:withResolver:withRejecter:)
+    func replaceBackground(inputImage: NSString, backgroundImage: NSString, maxSize: NSNumber, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
         
         // set up the segmenter
         let options = SelfieSegmenterOptions()
@@ -17,11 +17,8 @@ class ImageSelfieSegmentation: NSObject {
 
         let segmenter = Segmenter.segmenter(options: options)
         
-        print(inputImage)
-        print(backgroundImage)
-        
-        let inputUiImage = UIUtilities.loadFileToUiImage(filePath: inputImage as String);
-        let backgroundUiImage = UIUtilities.loadFileToUiImage(filePath: backgroundImage as String);
+        let inputUiImage = UIUtilities.loadFileToUiImage(filePath: inputImage as String, maxSize: maxSize, isBackground: false);
+        let backgroundUiImage = UIUtilities.loadFileToUiImage(filePath: backgroundImage as String, maxSize: maxSize, isBackground: true);
         
         if (inputUiImage == nil || backgroundUiImage == nil) {
             return reject("images", "Failed to load images", NSError(domain:"", code:500, userInfo:nil))
@@ -36,7 +33,7 @@ class ImageSelfieSegmentation: NSObject {
         let backgroundWidth = CVPixelBufferGetWidth(backgroundImageBuffer)
         let inputHeight = CVPixelBufferGetHeight(inputImageBuffer)
         let backgroundHeight = CVPixelBufferGetHeight(backgroundImageBuffer)
-        
+                
         if (inputWidth > backgroundWidth || inputHeight > backgroundHeight) {
             return reject("images", "Input image \(inputWidth)x\(inputHeight) is smaller than background image \(backgroundWidth)x\(backgroundHeight)", NSError(domain:"", code:500, userInfo:nil))
         }
