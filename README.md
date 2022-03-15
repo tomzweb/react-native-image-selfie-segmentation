@@ -34,8 +34,7 @@ const response = await replaceBackground(inputImage, backgroundImage, 500);
 
 **Max Size Notes**
 
-* The background maybe resized to a larger value. For example, an input image that is 1000x800 with a max size value of 250 will be resized to 250x200, but
-because the background size is required to larger than the input, a portrait background image of 800x1000 will be resized to 250x312.
+* The background image is resized to the max size value, then cropped from the center to fill the input image height/width.
 
 * On iOS Retina devices, Max Size is doubled, so a value of 250 with an input of 1000x800 will result in a 500x400 image.
 You can account for this by passing a value half of what is required.
