@@ -19,6 +19,9 @@ class ImageSelfieSegmentation: NSObject {
         
         let inputUiImage = UIUtilities.loadFileToUiImage(filePath: inputImage as String, maxSize: maxSize, isBackground: false);
         let backgroundUiImage = UIUtilities.loadFileToUiImage(filePath: backgroundImage as String, maxSize: maxSize, isBackground: true);
+        let bgWidth = inputUiImage!.size.width
+        let bgHeight = inputUiImage!.size.height
+        let croppedBackgroundUiImage = UIUtilities.cropToBounds(image: backgroundUiImage!, width: bgWidth, height: bgHeight)
         
         if (inputUiImage == nil || backgroundUiImage == nil) {
             return reject("images", "Failed to load images", NSError(domain:"", code:500, userInfo:nil))
@@ -26,7 +29,7 @@ class ImageSelfieSegmentation: NSObject {
         
         // now we need to convert the UI Image to an image buffer
         let inputImageBuffer = UIUtilities.createImageBuffer(from: inputUiImage!)!
-        let backgroundImageBuffer = UIUtilities.createImageBuffer(from: backgroundUiImage!)!
+        let backgroundImageBuffer = UIUtilities.createImageBuffer(from: croppedBackgroundUiImage)!
         
         
         let inputWidth = CVPixelBufferGetWidth(inputImageBuffer)
