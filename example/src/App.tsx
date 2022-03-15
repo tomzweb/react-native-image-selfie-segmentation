@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  Platform,
 } from 'react-native';
 
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -41,7 +42,11 @@ export default function App() {
   const onProcessImageHandler = async () => {
     if (inputImage && backgroundImage) {
       setLoading(true);
-      await replaceBackground(inputImage, backgroundImage, 250)
+      await replaceBackground(
+        inputImage,
+        backgroundImage,
+        Platform.OS === 'ios' ? 25 : 500
+      )
         .then((response) => {
           console.log('RESPONSE', response);
           setImage(response);

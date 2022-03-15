@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -51,35 +52,31 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
   }
 
 
-  // Example method
-  // See https://reactnative.dev/docs/native-modules-android
+  /**
+   * The core function to replace a background in a selfie, used in React Native JS
+   * @param inputStr
+   * @param backgroundStr
+   * @param maxSize
+   * @param promise
+   */
   @ReactMethod
   public void replaceBackground(String inputStr, String backgroundStr, int maxSize, Promise promise) {
 
     String finalImage = "";
     int inputRotation =  getRotationFromPath(inputStr);
     int backgroundRotation = getRotationFromPath(backgroundStr);
-    Bitmap inputBitmap = resize(toBitmap(inputStr), maxSize, maxSize, 0,false);
-    Bitmap backgroundBitmap = resize(toBitmap(backgroundStr), maxSize, maxSize, backgroundRotation, true);
-
-    Log.i("PRE INPUT SIZES", "Input image " + inputBitmap.getWidth() + "x" + inputBitmap.getHeight()
-      + " - Background image " + backgroundBitmap.getWidth() + "x" + backgroundBitmap.getHeight());
-
+    Bitmap inputBitmap = resize(toBitmap(inputStr), maxSize, maxSize, isRotated(inputRotation), false);
+    int inputWidth = isRotated(inputRotation) ? inputBitmap.getHeight() : inputBitmap.getWidth();
+    int inputHeight = isRotated(inputRotation) ? inputBitmap.getWidth() : inputBitmap.getHeight();
+    Bitmap backgroundBitmap = resize(toBitmap(backgroundStr), inputWidth, inputHeight, isRotated(backgroundRotation), true);
 
     InputImage inputImage = InputImage.fromBitmap(inputBitmap, inputRotation);
     InputImage backgroundImage = InputImage.fromBitmap(backgroundBitmap, backgroundRotation);
 
-    Log.i("ROTATIONS", inputRotation + " " + backgroundRotation);
-    Log.i("INPUT ROTATIONS", inputImage.getRotationDegrees() + " " + backgroundImage.getRotationDegrees());
-
-
-    int iWidth = inputImage.getWidth();
-    int iHeight = inputImage.getHeight();
-    int bWidth = backgroundImage.getWidth();
-    int bHeight = backgroundImage.getHeight();
-
-    Log.i("SIZES", "Input image " + iWidth + "x" + iHeight
-      + " - Background image " + bWidth + "x" + bHeight);
+    int iWidth = inputWidth;
+    int iHeight = inputHeight;
+    int bWidth = backgroundBitmap.getWidth();
+    int bHeight = backgroundBitmap.getHeight();
 
     if (iWidth > bWidth || iHeight > bHeight) {
       promise.reject("images", "Input image " + iWidth + "x" + iHeight
@@ -102,7 +99,6 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
     try {
       SegmentationMask mask = Tasks.await(result);
       // convert mask
-      Log.i("SIZES MASK", mask.getWidth() + " " + mask.getHeight());
       finalImage = generateMaskImage(mask, inputImage.getBitmapInternal(), backgroundImage.getBitmapInternal(), inputRotation, backgroundRotation);
       promise.resolve(finalImage);
     } catch (ExecutionException e) {
@@ -116,14 +112,21 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
 
   }
 
-
+  /**
+   * Generates the masked image and returns a file URI
+   * @param mask
+   * @param inputBitmap
+   * @param backgroundBitmap
+   * @param inputRotation
+   * @param backgroundRotation
+   * @return
+   */
   private String generateMaskImage (SegmentationMask mask, Bitmap inputBitmap, Bitmap backgroundBitmap, int inputRotation, int backgroundRotation) {
     // create a blank bitmap to put our new mask/image
     // if an image is rotated, we need to use height for width and visa versa
     int newWidth = isRotated(inputRotation) ? inputBitmap.getHeight() : inputBitmap.getWidth();
     int newHeight = isRotated(inputRotation) ? inputBitmap.getWidth() : inputBitmap.getHeight();
     Bitmap combinedBitmap = Bitmap.createBitmap(newWidth, newHeight, inputBitmap.getConfig());
-    Log.i("PRE FINAL IMAGE", combinedBitmap.getWidth() + " "  + combinedBitmap.getHeight());
 
     inputBitmap = isRotated(inputRotation) ? rotateBitmap(inputBitmap, inputRotation) : inputBitmap;
     backgroundBitmap = isRotated(backgroundRotation) ? rotateBitmap(backgroundBitmap, backgroundRotation) : backgroundBitmap;
@@ -146,6 +149,11 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
     return saveToInternalStorage(combinedBitmap);
   }
 
+  /**
+   * Stores the image to storage
+   * @param bitmapImage
+   * @return
+   */
   private String saveToInternalStorage(Bitmap bitmapImage){
     ContextWrapper cw = new ContextWrapper(this.getCurrentActivity().getApplicationContext());
     File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
@@ -167,7 +175,11 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
     return "file://" + filePath.getAbsolutePath();
   }
 
-  /** Converts NV21 format byte buffer to bitmap. */
+  /**
+   * Converts NV21 format byte buffer to bitmap
+   * @param input
+   * @return
+   */
   @Nullable
   public Bitmap toBitmap(String input) {
     Uri myUri = Uri.parse(input);
@@ -181,6 +193,12 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
     return bitmap;
   }
 
+  /**
+   * Rotates bitmap
+   * @param source
+   * @param angle
+   * @return
+   */
   public Bitmap rotateBitmap(Bitmap source, int angle)
   {
     Matrix matrix = new Matrix();
@@ -188,6 +206,11 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
     return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
   }
 
+  /**
+   * Returns the rotation degrees of an image from the file URI
+   * @param filePath
+   * @return
+   */
   public int getRotationFromPath(String filePath) {
     int rotation = 0;
     Uri myUri = Uri.parse(filePath);
@@ -205,35 +228,63 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
 
 
   /**
-   * Resize the bitmap
+   *
    * @param image
    * @param maxWidth
    * @param maxHeight
-   * @param rotation used to determine final height
-   * @param isBackground used to determine final height for backgrounds,
-   *                     where they need to be larger than the input image
+   * @param isRotated
+   * @param isBackground
    * @return
    */
-  private Bitmap resize(Bitmap image, int maxWidth, int maxHeight, int rotation, boolean isBackground) {
+  private Bitmap resize(Bitmap image, int maxWidth, int maxHeight, boolean isRotated, boolean isBackground) {
     int width = image.getWidth();
     int height = image.getHeight();
 
     // handles images where rotation is 0, but is portrait
-    float aspectRatio = image.getWidth() > image.getHeight() ? (float) width / (float) height : (float) height / (float) width;
+    float aspectRatio = width > height ? (float) width / (float) height : (float) height / (float) width;
 
-    // handles rotated images
     int finalWidth = maxWidth;
-    int finalHeight = isRotated(rotation) || isBackground ? Math.round(maxHeight * aspectRatio) : Math.round(maxHeight / aspectRatio);
+    int finalHeight = isBackground ? Math.round(maxWidth * aspectRatio) : Math.round(maxWidth / aspectRatio);
 
-    Bitmap resizedImage = Bitmap.createScaledBitmap(image, finalWidth, finalHeight, true);
+    if (isRotated && height > width && !isBackground) {
+      finalWidth = finalHeight;
+      finalHeight = maxWidth;
+    }
 
-    image.recycle();
-    return resizedImage;
+    if (isBackground) {
+      finalWidth = maxWidth;
+      finalHeight = maxHeight;
+    }
+
+    Bitmap croppedBackgroundBitmap = ThumbnailUtils.extractThumbnail(image, finalWidth, finalHeight);
+    return croppedBackgroundBitmap;
   }
 
+  /**
+   * Gets the dimensions for cropping an image
+   * @param bitmap
+   * @return
+   */
+  public int getSquareCropDimensionForBitmap(Bitmap bitmap)
+  {
+    //use the smallest dimension of the image to crop to
+    return Math.max(bitmap.getWidth(), bitmap.getHeight());
+  }
+
+  /**
+   * Returns whether an image is rotated
+   * @param rotation
+   * @return
+   */
   private Boolean isRotated(int rotation) {
     return rotation == 90 || rotation == 270;
   }
 
-    public static native String nativeReplaceBackground(String inputImage, String backgroundImage);
+  /**
+   * Fixes warning shown in React Native
+   * @param inputImage
+   * @param backgroundImage
+   * @return
+   */
+  public static native String nativeReplaceBackground(String inputImage, String backgroundImage);
 }
