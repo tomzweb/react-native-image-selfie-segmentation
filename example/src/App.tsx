@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Platform,
-  ImageSourcePropType,
+  ImageSourcePropType, SafeAreaView,
 } from 'react-native';
 
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -51,7 +51,7 @@ export default function App() {
       await replaceBackground(
         inputImage,
         backgroundImage,
-        Platform.OS === 'ios' ? 25 : 500
+        Platform.OS === 'ios' ? 250 : 500
       )
         .then((response) => {
           setImage(response);
@@ -65,102 +65,107 @@ export default function App() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.inputContainer}>
-        <View style={styles.inputSection}>
-          {inputImage ? (
-            <Image
-              style={styles.inputImage}
-              resizeMode="contain"
-              source={{ uri: inputImage }}
-            />
-          ) : (
-            <View style={styles.inputImage}>
-              <Text style={styles.inputImageText}>+</Text>
+    <SafeAreaView style={styles.wrapper}>
+      <View style={styles.container}>
+        <View style={styles.inputContainer}>
+          <View style={styles.inputSection}>
+            {inputImage ? (
+              <Image
+                style={styles.inputImage}
+                resizeMode="contain"
+                source={{ uri: inputImage }}
+              />
+            ) : (
+              <View style={styles.inputImage}>
+                <Text style={styles.inputImageText}>+</Text>
+              </View>
+            )}
+            <View>
+              <TouchableOpacity
+                style={styles.inputBtn}
+                onPress={() => loadImageLibrary(setInputImage)}
+              >
+                <Text style={styles.inputBtnText}>Add Selfie</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.inputBtnAlt}
+                onPress={() =>
+                  setInputImage(getPlaceholderUri(selfiePlaceholder))
+                }
+              >
+                <Text style={styles.inputBtnTextAlt}>Use Placeholder</Text>
+              </TouchableOpacity>
             </View>
-          )}
-          <View>
-            <TouchableOpacity
-              style={styles.inputBtn}
-              onPress={() => loadImageLibrary(setInputImage)}
-            >
-              <Text style={styles.inputBtnText}>Add Selfie</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.inputBtnAlt}
-              onPress={() =>
-                setInputImage(getPlaceholderUri(selfiePlaceholder))
-              }
-            >
-              <Text style={styles.inputBtnTextAlt}>Use Placeholder</Text>
-            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputSection}>
+            {backgroundImage ? (
+              <Image
+                style={styles.inputImage}
+                resizeMode="contain"
+                source={{ uri: backgroundImage }}
+              />
+            ) : (
+              <View style={styles.inputImage}>
+                <Text style={styles.inputImageText}>+</Text>
+              </View>
+            )}
+            <View>
+              <TouchableOpacity
+                style={styles.inputBtn}
+                onPress={() => loadImageLibrary(setBackgroundImage)}
+              >
+                <Text style={styles.inputBtnText}>Add Background</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.inputBtnAlt}
+                onPress={() =>
+                  setBackgroundImage(getPlaceholderUri(backgroundPlaceholder))
+                }
+              >
+                <Text style={styles.inputBtnTextAlt}>Use Placeholder</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
-        <View style={styles.inputSection}>
-          {backgroundImage ? (
+        <TouchableOpacity
+          style={
+            inputImage && backgroundImage
+              ? styles.inputBtn
+              : [styles.inputBtn, styles.inputBtnDisabled]
+          }
+          onPress={onProcessImageHandler}
+        >
+          <Text style={styles.inputBtnText}>
+            {loading ? 'Processing' : 'Process Image'}
+          </Text>
+        </TouchableOpacity>
+
+        <View style={styles.imageContainer}>
+          {image ? (
             <Image
-              style={styles.inputImage}
+              style={styles.image}
+              source={{ uri: image }}
               resizeMode="contain"
-              source={{ uri: backgroundImage }}
             />
           ) : (
-            <View style={styles.inputImage}>
-              <Text style={styles.inputImageText}>+</Text>
+            <View style={styles.image}>
+              <Text style={styles.inputImageText}>
+                {loading ? 'Loading' : 'Press Process Image'}
+              </Text>
             </View>
           )}
-          <View>
-            <TouchableOpacity
-              style={styles.inputBtn}
-              onPress={() => loadImageLibrary(setBackgroundImage)}
-            >
-              <Text style={styles.inputBtnText}>Add Background</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.inputBtnAlt}
-              onPress={() =>
-                setBackgroundImage(getPlaceholderUri(backgroundPlaceholder))
-              }
-            >
-              <Text style={styles.inputBtnTextAlt}>Use Placeholder</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
-
-      <TouchableOpacity
-        style={
-          inputImage && backgroundImage
-            ? styles.inputBtn
-            : [styles.inputBtn, styles.inputBtnDisabled]
-        }
-        onPress={onProcessImageHandler}
-      >
-        <Text style={styles.inputBtnText}>
-          {loading ? 'Processing' : 'Process Image'}
-        </Text>
-      </TouchableOpacity>
-
-      <View style={styles.imageContainer}>
-        {image ? (
-          <Image
-            style={styles.image}
-            source={{ uri: image }}
-            resizeMode="contain"
-          />
-        ) : (
-          <View style={styles.image}>
-            <Text style={styles.inputImageText}>
-              {loading ? 'Loading' : 'Press Process Image'}
-            </Text>
-          </View>
-        )}
-      </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     padding: 20,
