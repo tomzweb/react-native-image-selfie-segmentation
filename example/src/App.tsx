@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Platform,
+  ImageSourcePropType,
 } from 'react-native';
 
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -20,6 +21,12 @@ export default function App() {
   const [image, setImage] = useState<string | undefined>();
   const [inputImage, setInputImage] = useState<string | undefined>();
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>();
+  const backgroundPlaceholder = require('./assets/images/background.jpg');
+  const selfiePlaceholder = require('./assets/images/selfie.jpg');
+
+  const getPlaceholderUri = (image: ImageSourcePropType) => {
+    return Image.resolveAssetSource(image).uri;
+  };
 
   const loadImageLibrary = async (
     setter: Dispatch<SetStateAction<string | undefined>>
@@ -32,7 +39,6 @@ export default function App() {
         const { assets } = result;
         if (assets && assets.length > 0) {
           const { uri } = assets[0];
-          console.log('URI', uri);
           setter(uri);
         }
       }
@@ -48,7 +54,6 @@ export default function App() {
         Platform.OS === 'ios' ? 25 : 500
       )
         .then((response) => {
-          console.log('RESPONSE', response);
           setImage(response);
           setLoading(false);
         })
@@ -74,12 +79,22 @@ export default function App() {
               <Text style={styles.inputImageText}>+</Text>
             </View>
           )}
-          <TouchableOpacity
-            style={styles.inputBtn}
-            onPress={() => loadImageLibrary(setInputImage)}
-          >
-            <Text style={styles.inputBtnText}>Add Selfie</Text>
-          </TouchableOpacity>
+          <View>
+            <TouchableOpacity
+              style={styles.inputBtn}
+              onPress={() => loadImageLibrary(setInputImage)}
+            >
+              <Text style={styles.inputBtnText}>Add Selfie</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.inputBtnAlt}
+              onPress={() =>
+                setInputImage(getPlaceholderUri(selfiePlaceholder))
+              }
+            >
+              <Text style={styles.inputBtnTextAlt}>Use Placeholder</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.inputSection}>
@@ -94,12 +109,22 @@ export default function App() {
               <Text style={styles.inputImageText}>+</Text>
             </View>
           )}
-          <TouchableOpacity
-            style={styles.inputBtn}
-            onPress={() => loadImageLibrary(setBackgroundImage)}
-          >
-            <Text style={styles.inputBtnText}>Add Background</Text>
-          </TouchableOpacity>
+          <View>
+            <TouchableOpacity
+              style={styles.inputBtn}
+              onPress={() => loadImageLibrary(setBackgroundImage)}
+            >
+              <Text style={styles.inputBtnText}>Add Background</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.inputBtnAlt}
+              onPress={() =>
+                setBackgroundImage(getPlaceholderUri(backgroundPlaceholder))
+              }
+            >
+              <Text style={styles.inputBtnTextAlt}>Use Placeholder</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -144,7 +169,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   inputSection: {
     paddingHorizontal: 10,
@@ -156,11 +181,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
+  inputBtnAlt: {
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    paddingVertical: 5,
+    marginTop: 10,
+  },
   inputBtnDisabled: {
     backgroundColor: '#777777',
   },
   inputBtnText: {
     color: '#FFFFFF',
+  },
+  inputBtnTextAlt: {
+    color: '#000000',
   },
   inputImage: {
     width: (windowWidth - 60) / 2,

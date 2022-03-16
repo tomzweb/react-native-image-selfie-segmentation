@@ -33,6 +33,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -65,18 +68,34 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
     String finalImage = "";
     int inputRotation =  getRotationFromPath(inputStr);
     int backgroundRotation = getRotationFromPath(backgroundStr);
-    Bitmap inputBitmap = resize(toBitmap(inputStr), maxSize, maxSize, isRotated(inputRotation), false);
-    int inputWidth = isRotated(inputRotation) ? inputBitmap.getHeight() : inputBitmap.getWidth();
-    int inputHeight = isRotated(inputRotation) ? inputBitmap.getWidth() : inputBitmap.getHeight();
-    Bitmap backgroundBitmap = resize(toBitmap(backgroundStr), inputWidth, inputHeight, isRotated(backgroundRotation), true);
+    Bitmap inputBitmap = toBitmap(inputStr);
 
-    InputImage inputImage = InputImage.fromBitmap(inputBitmap, inputRotation);
-    InputImage backgroundImage = InputImage.fromBitmap(backgroundBitmap, backgroundRotation);
+    if (inputBitmap == null) {
+      promise.reject("input image", "Could not create bitmap from input URI: " + inputStr);
+      return;
+    }
+
+    Bitmap inputResizedBitmap = resize(inputBitmap, maxSize, maxSize, isRotated(inputRotation), false);
+
+    int inputWidth = isRotated(inputRotation) ? inputResizedBitmap.getHeight() : inputResizedBitmap.getWidth();
+    int inputHeight = isRotated(inputRotation) ? inputResizedBitmap.getWidth() : inputResizedBitmap.getHeight();
+
+    Bitmap backgroundBitmap = toBitmap(backgroundStr);
+
+    if (backgroundBitmap == null) {
+      promise.reject("background image", "Could not create bitmap from background URI: " + backgroundStr);
+      return;
+    }
+
+    Bitmap backgroundResizedBitmap = resize(backgroundBitmap, inputWidth, inputHeight, isRotated(backgroundRotation), true);
+
+    InputImage inputImage = InputImage.fromBitmap(inputResizedBitmap, inputRotation);
+    InputImage backgroundImage = InputImage.fromBitmap(backgroundResizedBitmap, backgroundRotation);
 
     int iWidth = inputWidth;
     int iHeight = inputHeight;
-    int bWidth = backgroundBitmap.getWidth();
-    int bHeight = backgroundBitmap.getHeight();
+    int bWidth = backgroundResizedBitmap.getWidth();
+    int bHeight = backgroundResizedBitmap.getHeight();
 
     if (iWidth > bWidth || iHeight > bHeight) {
       promise.reject("images", "Input image " + iWidth + "x" + iHeight
@@ -182,14 +201,13 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
    */
   @Nullable
   public Bitmap toBitmap(String input) {
-    Uri myUri = Uri.parse(input);
     Bitmap bitmap = null;
     try {
-      bitmap = MediaStore.Images.Media.getBitmap(this.getCurrentActivity().getContentResolver(), myUri);
+      URL url = new URL(input);
+      bitmap = BitmapFactory.decodeStream(url.openConnection().getInputStream());
     } catch (IOException e) {
       e.printStackTrace();
     }
-    Log.i("DEFAULT SIZE", bitmap.getWidth() + " " + bitmap.getHeight());
     return bitmap;
   }
 
