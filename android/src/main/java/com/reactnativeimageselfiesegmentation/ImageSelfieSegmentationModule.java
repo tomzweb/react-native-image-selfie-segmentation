@@ -54,7 +54,6 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
       return NAME;
   }
 
-
   /**
    * The core function to replace a background in a selfie, used in React Native JS
    * @param inputStr
@@ -63,43 +62,57 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
    * @param promise
    */
   @ReactMethod
-  public void replaceBackground(String inputStr, String backgroundStr, int maxSize, Promise promise) {
-
-    String finalImage = "";
+  public void replaceBackground(
+    String inputStr,
+    String backgroundStr,
+    int maxSize,
+    Promise promise
+  )  {
+    // get the rotation of the image from File URI
     int inputRotation =  getRotationFromPath(inputStr);
     int backgroundRotation = getRotationFromPath(backgroundStr);
+
+    // convert image URIs to Bitmaps
     Bitmap inputBitmap = toBitmap(inputStr);
-
-    if (inputBitmap == null) {
-      promise.reject("input image", "Could not create bitmap from input URI: " + inputStr);
-      return;
-    }
-
-    Bitmap inputResizedBitmap = resize(inputBitmap, maxSize, maxSize, isRotated(inputRotation), false);
-
-    int inputWidth = isRotated(inputRotation) ? inputResizedBitmap.getHeight() : inputResizedBitmap.getWidth();
-    int inputHeight = isRotated(inputRotation) ? inputResizedBitmap.getWidth() : inputResizedBitmap.getHeight();
-
     Bitmap backgroundBitmap = toBitmap(backgroundStr);
-
-    if (backgroundBitmap == null) {
-      promise.reject("background image", "Could not create bitmap from background URI: " + backgroundStr);
+    if (inputBitmap == null || backgroundBitmap == null) {
+      promise.reject("input image",
+        "Could not create bitmap from input or background URI: " +  inputStr);
       return;
     }
 
-    Bitmap backgroundResizedBitmap = resize(backgroundBitmap, inputWidth, inputHeight, isRotated(backgroundRotation), true);
+    // resize bitmaps based on maxSize and input image
+    Bitmap inputResizedBitmap = resize(
+      inputBitmap,
+      maxSize,
+      maxSize,
+      isRotated(inputRotation),
+      false
+    );
 
+    int inputWidth = isRotated(inputRotation) ? inputResizedBitmap.getHeight() :
+      inputResizedBitmap.getWidth();
+    int inputHeight = isRotated(inputRotation) ? inputResizedBitmap.getWidth() :
+      inputResizedBitmap.getHeight();
+
+    Bitmap backgroundResizedBitmap = resize(
+      backgroundBitmap,
+      inputWidth,
+      inputHeight,
+      isRotated(backgroundRotation),
+      true
+    );
+
+    // convert Bitmaps to Input Images
     InputImage inputImage = InputImage.fromBitmap(inputResizedBitmap, inputRotation);
     InputImage backgroundImage = InputImage.fromBitmap(backgroundResizedBitmap, backgroundRotation);
 
-    int iWidth = inputWidth;
-    int iHeight = inputHeight;
-    int bWidth = backgroundResizedBitmap.getWidth();
-    int bHeight = backgroundResizedBitmap.getHeight();
-
-    if (iWidth > bWidth || iHeight > bHeight) {
-      promise.reject("images", "Input image " + iWidth + "x" + iHeight
-        + " is smaller than background image " + bWidth + "x" + bHeight);
+    // return an error if input image is larger than background
+    if (inputWidth > backgroundResizedBitmap.getWidth() ||
+      inputHeight > backgroundResizedBitmap.getHeight()) {
+      promise.reject("images", "Input image " + inputWidth + "x" + inputHeight
+        + " is smaller than background image " + backgroundResizedBitmap.getWidth()
+        + "x" + backgroundResizedBitmap.getHeight());
 
       return;
     }
@@ -114,12 +127,18 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
 
     // process the mask
     Task<SegmentationMask> result = segmenter.process(inputImage);
-
     try {
       SegmentationMask mask = Tasks.await(result);
       // convert mask
-      finalImage = generateMaskImage(mask, inputImage.getBitmapInternal(), backgroundImage.getBitmapInternal(), inputRotation, backgroundRotation);
-      promise.resolve(finalImage);
+      Bitmap finalBitmapImage = generateMaskImage(
+        mask,
+        inputImage.getBitmapInternal(),
+        backgroundImage.getBitmapInternal(),
+        inputRotation,
+        backgroundRotation
+      );
+      String finalImageUri = saveToInternalStorage(finalBitmapImage);
+      promise.resolve(finalImageUri);
     } catch (ExecutionException e) {
       // The Task failed, this is the same exception you'd get in a non-blocking
       // failure handler.
@@ -140,7 +159,13 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
    * @param backgroundRotation
    * @return
    */
-  private String generateMaskImage (SegmentationMask mask, Bitmap inputBitmap, Bitmap backgroundBitmap, int inputRotation, int backgroundRotation) {
+  private Bitmap generateMaskImage (
+    SegmentationMask mask,
+    Bitmap inputBitmap,
+    Bitmap backgroundBitmap,
+    int inputRotation,
+    int backgroundRotation
+  ) {
     // create a blank bitmap to put our new mask/image
     // if an image is rotated, we need to use height for width and visa versa
     int newWidth = isRotated(inputRotation) ? inputBitmap.getHeight() : inputBitmap.getWidth();
@@ -148,7 +173,8 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
     Bitmap combinedBitmap = Bitmap.createBitmap(newWidth, newHeight, inputBitmap.getConfig());
 
     inputBitmap = isRotated(inputRotation) ? rotateBitmap(inputBitmap, inputRotation) : inputBitmap;
-    backgroundBitmap = isRotated(backgroundRotation) ? rotateBitmap(backgroundBitmap, backgroundRotation) : backgroundBitmap;
+    backgroundBitmap = isRotated(backgroundRotation) ? rotateBitmap(backgroundBitmap,
+      backgroundRotation) : backgroundBitmap;
 
     int maskWidth = mask.getWidth();
     int maskHeight = mask.getHeight();
@@ -159,13 +185,14 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
         // gets the likely hood of the background for this pixel
         double backgroundLikelihood = 1 - bufferMask.getFloat();
         // sets the color of the pixel, depending if background or not
-        int bgPixel = backgroundLikelihood > 0.2 ? backgroundBitmap.getPixel(x, y) : inputBitmap.getPixel(x, y) ;
+        int bgPixel = backgroundLikelihood > 0.2 ? backgroundBitmap.getPixel(x, y) :
+          inputBitmap.getPixel(x, y) ;
         combinedBitmap.setPixel(x, y, bgPixel);
       }
     }
 
     // converts and returns base64 image
-    return saveToInternalStorage(combinedBitmap);
+    return combinedBitmap;
   }
 
   /**
@@ -221,7 +248,15 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
   {
     Matrix matrix = new Matrix();
     matrix.postRotate(angle);
-    return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+    return Bitmap.createBitmap(
+      source,
+      0,
+      0,
+      source.getWidth(),
+      source.getHeight(),
+      matrix,
+      true
+    );
   }
 
   /**
@@ -234,7 +269,8 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
     Uri myUri = Uri.parse(filePath);
     try {
       ExifInterface exif = new ExifInterface(myUri.getPath());
-      rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+      rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+        ExifInterface.ORIENTATION_NORMAL);
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -254,15 +290,23 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
    * @param isBackground
    * @return
    */
-  private Bitmap resize(Bitmap image, int maxWidth, int maxHeight, boolean isRotated, boolean isBackground) {
+  private Bitmap resize(
+    Bitmap image,
+    int maxWidth,
+    int maxHeight,
+    boolean isRotated,
+    boolean isBackground
+  ) {
     int width = image.getWidth();
     int height = image.getHeight();
 
     // handles images where rotation is 0, but is portrait
-    float aspectRatio = width > height ? (float) width / (float) height : (float) height / (float) width;
+    float aspectRatio = width > height ? (float) width / (float) height :
+      (float) height / (float) width;
 
     int finalWidth = maxWidth;
-    int finalHeight = isBackground ? Math.round(maxWidth * aspectRatio) : Math.round(maxWidth / aspectRatio);
+    int finalHeight = isBackground ? Math.round(maxWidth * aspectRatio) :
+      Math.round(maxWidth / aspectRatio);
 
     if (isRotated && height > width && !isBackground) {
       finalWidth = finalHeight;
@@ -274,19 +318,13 @@ public class ImageSelfieSegmentationModule extends ReactContextBaseJavaModule {
       finalHeight = maxHeight;
     }
 
-    Bitmap croppedBackgroundBitmap = ThumbnailUtils.extractThumbnail(image, finalWidth, finalHeight);
-    return croppedBackgroundBitmap;
-  }
+    Bitmap croppedBackgroundBitmap = ThumbnailUtils.extractThumbnail(
+      image,
+      finalWidth,
+      finalHeight
+    );
 
-  /**
-   * Gets the dimensions for cropping an image
-   * @param bitmap
-   * @return
-   */
-  public int getSquareCropDimensionForBitmap(Bitmap bitmap)
-  {
-    //use the smallest dimension of the image to crop to
-    return Math.max(bitmap.getWidth(), bitmap.getHeight());
+    return croppedBackgroundBitmap;
   }
 
   /**
